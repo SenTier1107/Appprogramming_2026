@@ -1,31 +1,35 @@
-# 🚀 파이썬 모듈·ETL 프로세스 실습 및 빅데이터 분석 기초(2026.03.13)
+# 🚀 Appprogramming 2026 - 주차별 실습 및 과제 기록
 
-이 저장소는 파이썬 모듈 시스템의 이해, 외부 API를 활용한 데이터 파이프라인(ETL) 구축, 그리고 통계적 데이터 분석의 기초인 표본 추출 기법 실습 내용을 포함하고 있습니다.
+이 저장소는 '앱프로그래밍' 수업의 학습 기록과 과제물을 관리하는 공간입니다. 커밋 기록을 바탕으로 주차별 실습 내용과 주요 과제를 정리하였습니다.
 
 ---
 
-## 1. 파이썬 모듈 및 패키지 실습
-- **모듈(Module) 설계**: 사용자 정의 함수와 변수를 독립된 파일(`.py`)로 구성하고 호출하는 방법 실습
-- **패키지(Package) 구조화**: 폴더 기반의 계층적 구조를 통해 대규모 코드를 체계적으로 관리하는 실습
+## 📅 실습 및 과제 로드맵
 
-## 2. 로켓 발사 데이터 ETL 실습 프로젝트
-- **Extract (수집)**: `requests` 모듈을 사용하여 외부 로켓 데이터 API 호출 및 JSON 저장
-- **Transform (변환)**: 데이터 내 이미지 URL을 추출하여 로컬 파일로 자동 다운로드 처리
-- **Load (저장/시각화)**: 수집된 데이터를 분석하고 `matplotlib`을 통해 이미지 데이터 시각화
-
-## 3. 빅데이터 통계 기초 및 표본 추출 실습 (`seaborntips.ipynb`)
-- **데이터셋**: Seaborn `tips` 데이터 활용
-- **기술 통계 분석**: 
-  - 팁(Tip) 데이터의 평균($3.00$), 분산($1.91$), 왜도($1.47$) 분석
-  - **평균의 함정**: 데이터에 이상치(Outlier)가 포함될 경우 평균(Mean)이 중앙값(Median)보다 왜곡될 수 있음을 시각적으로 확인
-- **데이터 샘플링(Sampling) 기법**:
-  - **단순 무작위 추출(SRS)**: 모집단에서 편향 없이 데이터를 무작위로 추출
-  - **층화 무작위 추출(Stratified Sampling)**: 성별 등 특정 집단의 비율을 유지하며 표본 추출
-  - **집락 추출(Cluster Sampling)**: 특정 요일(집단)을 선택하여 해당 집단 전체를 표본으로 활용
+| 구분 | 날짜 | 주요 실습 및 과제 | 상세 내용 |
+| :--- | :--- | :--- | :--- |
+| **1주차** | 2026.03.13 | `모듈,패키지 실습파일`<br>`과제01_Rocket,Titanic.ipynb` | - 파이썬 모듈 시스템 및 패키지 구조화 실습<br>- 외부 API 호출을 통한 ETL 프로세스 구현 기초 |
+| **2주차** | 2026.03.20 | `python_class_faker,tom_jerry.ipynb`<br>`seaborntips.ipynb` | - 클래스(Class) 설계 및 객체지향 프로그래밍 실습<br>- Seaborn 라이브러리를 활용한 데이터 샘플링 실습 |
+| **3월 과제** | 2026.03.23 | **EDA 프로젝트 (25%)**<br>`EDA_혈액헌혈_코랩코드.ipynb`<br>`EDA_보고서_혈액헌혈_이지원_2555031.pdf` | - 공공 데이터를 활용한 탐색적 데이터 분석(EDA)<br>- 데이터 시각화 및 분석 결과 보고서 작성 |
+| **분석 실습** | **-** | `customer_data_preprocessing.ipynb`<br>`Preprocessing_Skewed_Data_Transformation.ipynb`<br>`Standardization_Analysis_of_human_data.ipynb` | - 실무 데이터 클렌징 및 전처리 기법 학습<br>- 데이터 표준화 및 왜곡 데이터 변환 분석 |
 
 ---
 
 ## 🛠 Tech Stack
-- **Language**: Python 3.10+
-- **Libraries**: `Pandas`, `NumPy`, `Seaborn`, `Matplotlib`, `Requests`
-- **Environment**: Google Colab / Jupyter Notebook
+
+### Languages & Environments
+![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white) ![Google Colab](https://img.shields.io/badge/Google%20Colab-F9AB00?style=flat-square&logo=googlecolab&logoColor=white) ![Jupyter](https://img.shields.io/badge/Jupyter-F37626?style=flat-square&logo=jupyter&logoColor=white)
+
+### Data Analysis & Visualization
+![Pandas](https://img.shields.io/badge/Pandas-150458?style=flat-square&logo=pandas&logoColor=white) ![NumPy](https://img.shields.io/badge/NumPy-013243?style=flat-square&logo=numpy&logoColor=white) ![Seaborn](https://img.shields.io/badge/Seaborn-444444?style=flat-square) ![Matplotlib](https://img.shields.io/badge/Matplotlib-ffffff?style=flat-square&logo=matplotlib&logoColor=black)
+
+---
+
+## 👤 Profile
+* **이름**: 이지원 (Jiwon Lee)
+* **학번**: 2555031
+* **전공**: 빅데이터과
+
+
+---
+© 2026 Jiwon Lee. All rights reserved.
