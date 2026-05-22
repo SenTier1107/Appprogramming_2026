@@ -18,12 +18,12 @@ Step 2 → Jinja2 Template 객체로 변수를 HTML에 주입
            문제: HTML이 여전히 Python 코드 안에 있음 (관심사가 섞임)
 
 Step 3 → HTML은 templates/ 폴더, CSS는 static/ 폴더로 완전히 분리
-           Python은 데이터 준비만, 화면은 외부 파일이 담당 ✅
+           Python은 데이터 준비만, 화면은 외부 파일이 담당 
 ```
 
 ---
 
-## 📌 배운 개념
+##  배운 개념
 
 ### HTMLResponse
 
@@ -89,7 +89,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 ---
 
-## 📁 각 파일이 하는 일
+##  각 파일이 하는 일
 
 ### `main.py`
 서버의 핵심 파일입니다. 어떤 URL로 접속했을 때 어떤 함수를 실행할지 정의(라우팅)하고, 템플릿에 넘길 데이터를 준비합니다. Step 1~3이 모두 이 파일 안에 들어있습니다.
@@ -111,7 +111,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 ---
 
-## 🚀 실행 방법
+##  실행 방법
 
 ```bash
 pip install fastapi uvicorn jinja2
