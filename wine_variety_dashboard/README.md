@@ -9,7 +9,7 @@ app_file: app.py
 pinned: false
 ---
 
-# 🍷 Wine Classification Dashboard
+#  Wine Classification Dashboard
 
 FastAPI와 Gradio를 결합한 이탈리아 와인 품종 분류 웹 서비스입니다.  
 scikit-learn의 `load_wine` 데이터셋을 기반으로 RandomForest 모델을 학습하고,  
@@ -17,7 +17,7 @@ scikit-learn의 `load_wine` 데이터셋을 기반으로 RandomForest 모델을 
 
 ---
 
-## 📌 프로젝트 개요
+##  프로젝트 개요
 
 | 항목 | 내용 |
 |------|------|
@@ -29,7 +29,7 @@ scikit-learn의 `load_wine` 데이터셋을 기반으로 RandomForest 모델을 
 
 ---
 
-## 🚀 실행 방법
+##  실행 방법
 
 ### 로컬 실행
 
@@ -61,7 +61,7 @@ docker run -p 7860:7860 wine-dashboard
 
 ---
 
-## 🗂️ 탭 기능 소개
+##  탭 기능 소개
 
 ### 탭 1 — 데이터 조회
 - 178개 전체 샘플을 테이블로 조회
@@ -81,7 +81,7 @@ docker run -p 7860:7860 wine-dashboard
 
 ---
 
-## 📊 피처 중요도 분석 결과
+##  피처 중요도 분석 결과
 
 | 순위 | 피처 | 중요도 | 누적 |
 |------|------|--------|------|
@@ -97,7 +97,7 @@ docker run -p 7860:7860 wine-dashboard
 
 ---
 
-## 🛠️ 기술 스택
+##  기술 스택
 
 | 분류 | 기술 |
 |------|------|
@@ -110,7 +110,7 @@ docker run -p 7860:7860 wine-dashboard
 
 ---
 
-## 📁 파일 구조
+## 파일 구조
 
 ```
 ├── app.py                 # FastAPI + Gradio 통합 서버
@@ -123,7 +123,7 @@ docker run -p 7860:7860 wine-dashboard
 
 ---
 
-## 🍷 와인 클래스 설명
+##  와인 클래스 설명
 
 | 클래스 | 품종 | 특징 |
 |--------|------|------|
@@ -131,4 +131,4 @@ docker run -p 7860:7860 wine-dashboard
 | class_1 | **Grignolino (그리뇰리노)** | 미디엄바디 레드와인. 페놀 함량이 중간이며 균형 잡힌 특성. |
 | class_2 | **Barbera (바르베라)** | 산도 높은 레드와인. 말산과 색 강도가 높은 편. |
 
-> 📌 데이터 출처: UCI ML Repository — 이탈리아 동일 지역의 세 품종 와인 178개 샘플
+> 데이터 출처: UCI ML Repository — 이탈리아 동일 지역의 세 품종 와인 178개 샘플
