@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{{ playlist_name }}</h1>
+
+<ul class="playlist">
+  {% for piece in pieces %}
+    <li class="piece-item {% if piece.id == featured_id %}featured{% endif %}">
+      <span class="num">{{ loop.index }}</span>
+      <a href="/piece/{{ piece.id }}">
+        <strong>{{ piece.title }}</strong>
+        <span class="composer">— {{ piece.composer }}</span>
+      </a>
+      <span class="meta">{{ piece.period }} · {{ piece.duration }}분</span>
+      {% if piece.id == featured_id %}
+        <span class="badge">✨ 오늘의 추천</span>
+      {% endif %}
+    </li>
+  {% endfor %}
+</ul>
+{% endblock %}

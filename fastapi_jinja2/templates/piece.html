@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% if piece %}
+  <h1>🎼 {{ piece.title }}</h1>
+  <p>🎹 작곡가: <strong>{{ piece.composer }}</strong></p>
+  <p>🕰️ 시대: <strong>{{ piece.period }}</strong></p>
+  <p>⏱️ 연주 시간: <strong>약 {{ piece.duration }}분</strong></p>
+  {% if piece.duration >= 25 %}
+    <p class="note">💡 긴 곡이에요 — 집중해서 들어보세요!</p>
+  {% endif %}
+{% else %}
+  <h2>🚫 악곡 #{{ piece_id }}을 찾을 수 없습니다</h2>
+{% endif %}
+
+<a href="/playlist">← 플레이리스트로 돌아가기</a>
+{% endblock %}

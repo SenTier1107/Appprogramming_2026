@@ -1,0 +1,107 @@
+/* Classical Playlist - Global Style */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background: #faf8f3;
+    color: #2c2416;
+    font-family: 'Georgia', serif;
+    min-height: 100vh;
+}
+
+nav {
+    background: #2c1f0e;
+    padding: 1rem 2rem;
+    display: flex;
+    gap: 2rem;
+    border-bottom: 3px solid #8b6914;
+}
+
+nav a {
+    color: #c9a84c;
+    text-decoration: none;
+    font-size: 0.9rem;
+    letter-spacing: 0.05em;
+}
+
+nav a:hover { color: #f0d080; }
+
+main {
+    max-width: 640px;
+    margin: 3rem auto;
+    padding: 0 1.5rem;
+}
+
+h1 {
+    font-size: 1.7rem;
+    margin-bottom: 2rem;
+    color: #2c1f0e;
+    border-bottom: 1px solid #d4b87a;
+    padding-bottom: 0.8rem;
+}
+
+/* Playlist */
+.playlist {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+
+.piece-item {
+    background: #fff;
+    border: 1px solid #e0d4b0;
+    border-radius: 6px;
+    padding: 1rem 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.piece-item:hover { border-color: #8b6914; }
+
+.piece-item.featured {
+    border-color: #8b6914;
+    background: #fdf6e3;
+}
+
+.num {
+    color: #b09050;
+    font-size: 0.85rem;
+    min-width: 1.5rem;
+    text-align: center;
+}
+
+.piece-item a {
+    text-decoration: none;
+    color: #2c1f0e;
+    flex: 1;
+}
+
+.piece-item a:hover strong { color: #8b6914; }
+
+.composer {
+    color: #7a6040;
+    font-size: 0.85rem;
+    margin-left: 0.3rem;
+}
+
+.meta {
+    font-size: 0.78rem;
+    color: #a09060;
+    white-space: nowrap;
+}
+
+.badge {
+    font-size: 0.78rem;
+    background: #8b6914;
+    color: #fff;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+/* Piece detail */
+p { margin: 0.6rem 0; font-size: 1.05rem; }
+.note { color: #7a6040; font-style: italic; margin-top: 1rem; }
+a[href] { color: #8b6914; }
