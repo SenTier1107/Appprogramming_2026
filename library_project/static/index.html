@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>도서관 관리 시스템</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0b0d14;--surface:#12151f;--surface2:#1a1e2e;--surface3:#20253a;
+  --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.13);
+  --accent:#5b7cf6;--accent-h:#4a68e8;--accent-glow:rgba(91,124,246,.16);
+  --user:#10b981;--user-h:#059669;--user-glow:rgba(16,185,129,.16);
+  --purple:#9b7cf6;--green:#2dd4a0;--red:#f26b6b;--amber:#f5a623;--sky:#38bdf8;
+  --text:#dde3f0;--muted:#6b7694;--muted2:#8892aa;
+  --font:'Noto Sans KR',sans-serif;--mono:'JetBrains Mono',monospace;
+  --r:10px;--rl:14px;--mode-accent:var(--accent);--mode-glow:var(--accent-glow);
+}
+body.user-mode{--mode-accent:var(--user);--mode-glow:var(--user-glow);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;min-height:100vh;-webkit-font-smoothing:antialiased;}
+::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:99px;}
+
+.mode-bar{position:fixed;top:0;left:0;right:0;height:48px;z-index:200;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;}
+.mode-bar-left{display:flex;align-items:center;gap:10px;}
+.mode-logo-mark{width:28px;height:28px;background:var(--mode-accent);border-radius:7px;display:flex;align-items:center;justify-content:center;transition:background .3s;}
+.mode-logo-mark svg{width:15px;height:15px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;}
+.mode-logo-text{font-size:14px;font-weight:700;letter-spacing:-.3px;}
+.mode-toggle{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:99px;padding:3px;gap:2px;}
+.mode-btn{padding:6px 16px;border-radius:99px;font-size:12px;font-weight:600;border:none;cursor:pointer;transition:all .2s;font-family:var(--font);color:var(--muted2);background:none;}
+.mode-btn.active-admin{background:var(--accent);color:#fff;}
+.mode-btn.active-user{background:var(--user);color:#fff;}
+.mode-right{font-size:11px;color:var(--muted);font-family:var(--mono);}
+
+.layout{display:flex;padding-top:48px;min-height:100vh;width:100%;}
+.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);position:fixed;top:48px;left:0;bottom:0;display:flex;flex-direction:column;z-index:100;overflow-y:auto;}
+.sidebar-section{padding:14px 10px 6px;}
+.nav-label{font-size:9px;font-weight:600;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;padding:8px 10px 5px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:var(--r);cursor:pointer;color:var(--muted2);font-size:13px;transition:all .15s;margin-bottom:1px;border:none;background:none;width:100%;text-align:left;position:relative;}
+.nav-item:hover{background:var(--surface2);color:var(--text);}
+.nav-item.active{background:var(--mode-glow);color:var(--mode-accent);font-weight:500;}
+.nav-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:18px;background:var(--mode-accent);border-radius:0 3px 3px 0;}
+.nav-icon{width:15px;height:15px;flex-shrink:0;opacity:.7;}
+.nav-item.active .nav-icon{opacity:1;}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;padding:1px 6px;border-radius:99px;font-weight:700;font-family:var(--mono);}
+.sidebar-foot{margin-top:auto;padding:12px 16px;border-top:1px solid var(--border);}
+.sidebar-foot p{font-size:10px;color:var(--muted);font-family:var(--mono);line-height:1.8;}
+
+.main{margin-left:220px;flex:1;min-height:calc(100vh - 48px);display:flex;flex-direction:column;min-width:0;overflow-x:hidden;}
+.topbar{height:50px;border-bottom:1px solid var(--border);background:rgba(18,21,31,.88);backdrop-filter:blur(12px);position:sticky;top:0;z-index:50;display:flex;align-items:center;padding:0 26px;gap:10px;}
+.topbar-title{font-size:15px;font-weight:600;flex:1;letter-spacing:-.3px;}
+.topbar-sub{font-size:11px;color:var(--muted);margin-left:6px;}
+.content{padding:24px 26px;flex:1;}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 15px;border-radius:var(--r);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;font-family:var(--font);white-space:nowrap;}
+.btn-primary{background:var(--mode-accent);color:#fff;}.btn-primary:hover{filter:brightness(1.1);}
+.btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border2);}.btn-ghost:hover{background:var(--surface3);}
+.btn-danger{background:rgba(242,107,107,.12);color:var(--red);border:1px solid rgba(242,107,107,.25);}.btn-danger:hover{background:rgba(242,107,107,.2);}
+.btn-user{background:var(--user);color:#fff;}.btn-user:hover{background:var(--user-h);}
+.btn-sky{background:rgba(56,189,248,.14);color:var(--sky);border:1px solid rgba(56,189,248,.3);}.btn-sky:hover{background:rgba(56,189,248,.22);}
+.btn-sm{padding:6px 11px;font-size:12px;}.btn svg{width:13px;height:13px;fill:currentColor;flex-shrink:0;}
+
+.page{display:none;}.page.active{display:block;animation:fadeIn .18s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+.stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-bottom:20px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:17px 19px;position:relative;overflow:hidden;}
+.stat-card::after{content:'';position:absolute;right:-8px;top:-8px;width:64px;height:64px;border-radius:50%;opacity:.07;}
+.sc-blue::after{background:var(--accent);}.sc-green::after{background:var(--green);}.sc-amber::after{background:var(--amber);}.sc-red::after{background:var(--red);}.sc-purple::after{background:var(--purple);}
+.stat-label{font-size:11px;color:var(--muted);margin-bottom:9px;font-weight:500;}
+.stat-value{font-size:28px;font-weight:700;font-family:var(--mono);line-height:1;}
+.sc-blue .stat-value{color:var(--accent);}.sc-green .stat-value{color:var(--green);}.sc-amber .stat-value{color:var(--amber);}.sc-red .stat-value{color:var(--red);}.sc-purple .stat-value{color:var(--purple);}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:5px;}
+
+.charts-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin-bottom:20px;}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:19px;}
+.chart-title{font-size:13px;font-weight:600;margin-bottom:3px;}.chart-sub{font-size:11px;color:var(--muted);margin-bottom:16px;}
+.top-list{display:flex;flex-direction:column;gap:9px;}
+.top-item{display:flex;align-items:center;gap:9px;}
+.top-rank{font-size:11px;font-weight:700;color:var(--muted);font-family:var(--mono);width:16px;flex-shrink:0;}
+.top-bar-wrap{flex:1;height:5px;background:var(--surface3);border-radius:99px;overflow:hidden;}
+.top-bar{height:100%;background:var(--accent);border-radius:99px;transition:width .6s ease;}
+.top-name{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;}
+.top-cnt{font-size:11px;color:var(--muted);font-family:var(--mono);margin-left:auto;flex-shrink:0;}
+
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:20px;}
+.table-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+.table-header h3{font-size:14px;font-weight:600;flex:1;min-width:80px;}
+.filter-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;padding:9px 15px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border);font-weight:600;}
+td{padding:11px 15px;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:rgba(255,255,255,.02);}
+.empty-td{text-align:center;color:var(--muted);padding:44px !important;font-size:13px;}
+
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:99px;font-size:11px;font-weight:500;}
+.dot{width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0;}
+.bg{background:rgba(91,124,246,.14);color:var(--accent);}
+.gg{background:rgba(45,212,160,.14);color:var(--green);}
+.rr{background:rgba(242,107,107,.14);color:var(--red);}
+.aa{background:rgba(245,166,35,.14);color:var(--amber);}
+.pp{background:rgba(155,124,246,.14);color:var(--purple);}
+.ss{background:rgba(56,189,248,.14);color:var(--sky);}
+.id-cell{color:var(--muted);font-family:var(--mono);font-size:11px;}
+.mono{font-family:var(--mono);font-size:12px;}
+
+/* 등급 배지 */
+.grade-bronze{background:rgba(205,127,50,.18);color:#cd7f32;border-radius:99px;font-size:11px;font-weight:600;padding:2px 8px;}
+.grade-silver{background:rgba(192,192,192,.18);color:#c0c0c0;border-radius:99px;font-size:11px;font-weight:600;padding:2px 8px;}
+.grade-gold  {background:rgba(255,215,0,.18);  color:#ffd700;border-radius:99px;font-size:11px;font-weight:600;padding:2px 8px;}
+
+/* 재고 표시 */
+.stock-bar-wrap{display:flex;align-items:center;gap:6px;}
+.stock-pips{display:flex;gap:3px;}
+.stock-pip{width:8px;height:8px;border-radius:2px;}
+.stock-pip.on{background:var(--green);}
+.stock-pip.off{background:var(--surface3);}
+
+.inp{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:7px 11px;border-radius:8px;font-size:13px;font-family:var(--font);outline:none;transition:border-color .15s;}
+.inp:focus{border-color:var(--mode-accent);}
+.inp::placeholder{color:var(--muted);}
+option{background:var(--surface2);}
+
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
+.overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:var(--rl);width:480px;max-width:95vw;max-height:90vh;overflow-y:auto;animation:modalIn .2s ease;}
+@keyframes modalIn{from{opacity:0;transform:scale(.97) translateY(8px)}to{opacity:1;transform:none}}
+.modal-head{padding:18px 22px 15px;border-bottom:1px solid var(--border);display:flex;align-items:center;}
+.modal-head h3{font-size:15px;font-weight:600;flex:1;}
+.modal-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:2px 6px;border-radius:6px;}
+.modal-close:hover{color:var(--text);background:var(--surface2);}
+.modal-body{padding:18px 22px;}.modal-foot{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+.fg{margin-bottom:13px;}.fl{display:block;font-size:11px;color:var(--muted);margin-bottom:5px;font-weight:500;}.fi{width:100%;}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+.info-box{font-size:12px;color:var(--muted2);padding:11px 13px;background:var(--surface2);border-radius:8px;line-height:1.8;border-left:2px solid var(--mode-accent);}
+.warn-box{font-size:12px;color:var(--amber);padding:11px 13px;background:rgba(245,166,35,.08);border-radius:8px;line-height:1.8;border-left:2px solid var(--amber);}
+
+/* 회원 등급 정보 테이블 */
+.grade-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px;}
+.grade-table th{background:var(--surface3);padding:7px 10px;text-align:center;font-weight:600;color:var(--muted2);}
+.grade-table td{padding:7px 10px;text-align:center;border-top:1px solid var(--border);}
+
+#toast{position:fixed;bottom:20px;right:20px;z-index:9999;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:11px 16px;font-size:13px;transform:translateY(12px);opacity:0;transition:all .22s;pointer-events:none;}
+#toast.show{transform:none;opacity:1;}
+#toast.ok{border-color:rgba(45,212,160,.4);color:var(--green);}
+#toast.err{border-color:rgba(242,107,107,.4);color:var(--red);}
+
+.spin{width:18px;height:18px;border:2px solid var(--border2);border-top-color:var(--mode-accent);border-radius:50%;animation:spin .6s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* 대출자 UI */
+.book-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:13px;margin-bottom:20px;}
+.book-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:16px;transition:border-color .15s;}
+.book-card:hover{border-color:var(--border2);}
+.book-card-title{font-size:14px;font-weight:600;margin-bottom:5px;line-height:1.4;}
+.book-card-author{font-size:12px;color:var(--muted2);margin-bottom:4px;}
+.book-card-pub{font-size:11px;color:var(--muted);margin-bottom:10px;}
+.book-card-foot{display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap;}
+.loan-cards{display:flex;flex-direction:column;gap:11px;margin-bottom:20px;}
+.loan-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:16px 18px;display:flex;align-items:center;gap:15px;}
+.loan-card-spine{width:4px;height:52px;border-radius:99px;background:var(--mode-accent);flex-shrink:0;}
+.loan-card-spine.overdue{background:var(--red);}
+.loan-card-info{flex:1;min-width:0;}
+.loan-card-title{font-size:14px;font-weight:600;margin-bottom:4px;}
+.loan-card-meta{font-size:12px;color:var(--muted2);}
+.loan-card-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;}
+.member-picker{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:18px;margin-bottom:18px;display:flex;align-items:center;gap:14px;}
+.member-avatar{width:40px;height:40px;border-radius:50%;background:var(--user-glow);border:2px solid var(--user);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:var(--user);flex-shrink:0;}
+.member-picker-info{flex:1;}
+.member-picker-name{font-size:15px;font-weight:600;margin-bottom:2px;}
+.member-picker-email{font-size:12px;color:var(--muted2);}
+.section-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.section-head h2{font-size:16px;font-weight:600;}
+.section-head p{font-size:12px;color:var(--muted);}
+</style>
+</head>
+<body>
+
+<div class="mode-bar">
+  <div class="mode-bar-left">
+    <div class="mode-logo-mark">
+      <svg viewBox="0 0 24 24"><path d="M4 19V7a2 2 0 0 1 2-2h12v12H6a2 2 0 0 0 2 2h12"/><line x1="8" y1="9" x2="14" y2="9"/></svg>
+    </div>
+    <span class="mode-logo-text">LibraryMS</span>
+  </div>
+  <div class="mode-toggle">
+    <button class="mode-btn active-admin" id="btn-admin" onclick="switchMode('admin')">관리자</button>
+    <button class="mode-btn" id="btn-user" onclick="switchMode('user')">대출자</button>
+  </div>
+  <div class="mode-right" id="topbar-clock"></div>
+</div>
+
+<div class="layout">
+<aside class="sidebar">
+  <div class="sidebar-section">
+    <div id="admin-nav">
+      <div class="nav-label">관리자</div>
+      <button class="nav-item active" onclick="go('dashboard')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        대시보드
+      </button>
+      <button class="nav-item" onclick="go('books')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 19V7a2 2 0 0 1 2-2h12v12H6a2 2 0 0 0 2 2h12"/></svg>
+        도서 관리
+      </button>
+      <button class="nav-item" onclick="go('members')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="7" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><circle cx="18" cy="8" r="2.5"/><path d="M18 13c2.5 0 4.5 1.7 4.5 4"/></svg>
+        회원 관리
+      </button>
+      <button class="nav-item" onclick="go('loans')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/></svg>
+        대출 관리
+      </button>
+      <button class="nav-item" id="nav-overdue" onclick="go('overdue')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="15.5" x2="12" y2="16.5" stroke-width="2.5"/></svg>
+        연체 현황
+      </button>
+    </div>
+    <div id="user-nav" style="display:none">
+      <div class="nav-label">대출자</div>
+      <button class="nav-item" onclick="go('u-browse')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+        도서 검색
+      </button>
+      <button class="nav-item" onclick="go('u-myloans')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><polyline points="9 12 11 14 15 10"/></svg>
+        내 대출 현황
+      </button>
+    </div>
+  </div>
+  <div class="sidebar-foot"><p id="sidebar-hint">localhost:8000/docs</p></div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <span class="topbar-title" id="topbar-title">대시보드</span>
+    <span class="topbar-sub" id="topbar-sub"></span>
+    <button class="btn btn-ghost btn-sm" onclick="loadAll()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" width="13" height="13"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/></svg>
+      새로고침
+    </button>
+  </header>
+
+  <div class="content">
+
+    <!-- 대시보드 -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card sc-blue"><div class="stat-label">전체 도서</div><div class="stat-value" id="s-books">—</div><div class="stat-sub">등록된 책</div></div>
+        <div class="stat-card sc-green"><div class="stat-label">대출 가능</div><div class="stat-value" id="s-avail">—</div><div class="stat-sub">즉시 대출 가능</div></div>
+        <div class="stat-card sc-amber"><div class="stat-label">대출 중</div><div class="stat-value" id="s-active">—</div><div class="stat-sub">현재 대출 중</div></div>
+        <div class="stat-card sc-red"><div class="stat-label">연체</div><div class="stat-value" id="s-overdue">—</div><div class="stat-sub">반납 기한 초과</div></div>
+      </div>
+      <div class="stats-grid" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+        <div class="stat-card sc-purple"><div class="stat-label">전체 회원</div><div class="stat-value" id="s-members">—</div><div class="stat-sub">등록 회원 수</div></div>
+        <div class="stat-card sc-blue"><div class="stat-label">전체 대출 이력</div><div class="stat-value" id="s-total">—</div><div class="stat-sub">누적 대출 건수</div></div>
+        <div class="stat-card sc-green"><div class="stat-label">반납 완료</div><div class="stat-value" id="s-returned">—</div><div class="stat-sub">정상 반납 건수</div></div>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-title">대출 현황 분포</div><div class="chart-sub">전체 도서 중 대출 상태 비율</div>
+          <div style="height:210px;display:flex;align-items:center;justify-content:center"><canvas id="chart-donut" style="max-height:200px"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">많이 빌린 책 TOP 5</div><div class="chart-sub">누적 대출 횟수 기준</div>
+          <div class="top-list" id="top5" style="margin-top:8px"></div>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><h3>최근 대출 현황</h3></div>
+        <table><thead><tr><th>도서명</th><th>회원</th><th>등급</th><th>대출일</th><th>반납 예정</th><th>상태</th></tr></thead>
+        <tbody id="dash-loans"></tbody></table>
+      </div>
+    </div>
+
+    <!-- 도서 관리 -->
+    <div class="page" id="page-books">
+      <div class="table-card">
+        <div class="table-header">
+          <h3>도서 목록</h3>
+          <div class="filter-row">
+            <input class="inp" style="width:170px" placeholder="제목 / 저자 검색" id="bk-kw" oninput="filterBooks()">
+            <select class="inp" id="bk-pub" onchange="filterBooks()"><option value="">출판사 전체</option></select>
+            <select class="inp" id="bk-av" onchange="filterBooks()"><option value="">대출 가능 여부</option><option value="true">대출 가능</option><option value="false">대출 중</option></select>
+            <button class="btn btn-primary btn-sm" onclick="openBookModal()"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>도서 등록</button>
+          </div>
+        </div>
+        <table><thead><tr><th>#</th><th>제목</th><th>저자</th><th>출판사</th><th>재고</th><th>상태</th><th>관리</th></tr></thead>
+        <tbody id="books-body"></tbody></table>
+      </div>
+    </div>
+
+    <!-- 회원 관리 -->
+    <div class="page" id="page-members">
+      <div class="table-card">
+        <div class="table-header">
+          <h3>회원 목록</h3>
+          <div class="filter-row">
+            <input class="inp" style="width:175px" id="me-kw" placeholder="이름 / 이메일 검색" oninput="filterMembers()">
+            <select class="inp" id="me-grade" onchange="filterMembers()"><option value="">등급 전체</option><option>브론즈</option><option>실버</option><option>골드</option></select>
+            <button class="btn btn-primary btn-sm" onclick="openMemberModal()"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>회원 등록</button>
+          </div>
+        </div>
+        <table><thead><tr><th>#</th><th>이름</th><th>이메일</th><th>전화번호</th><th>등급</th><th>대출 제한</th><th>현재 대출</th><th>관리</th></tr></thead>
+        <tbody id="members-body"></tbody></table>
+      </div>
+    </div>
+
+    <!-- 대출 관리 -->
+    <div class="page" id="page-loans">
+      <div class="table-card">
+        <div class="table-header">
+          <h3>대출 목록</h3>
+          <div class="filter-row">
+            <select class="inp" id="loan-filter" onchange="renderLoans()"><option value="">전체</option><option value="active">대출 중</option><option value="returned">반납 완료</option></select>
+            <button class="btn btn-primary btn-sm" onclick="openLoanModal()"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>대출 등록</button>
+          </div>
+        </div>
+        <table><thead><tr><th>#</th><th>도서명</th><th>회원(등급)</th><th>대출일</th><th>반납 예정</th><th>반납일</th><th>연장</th><th>상태</th><th>관리</th></tr></thead>
+        <tbody id="loans-body"></tbody></table>
+      </div>
+    </div>
+
+    <!-- 연체 현황 -->
+    <div class="page" id="page-overdue">
+      <div class="table-card">
+        <div class="table-header"><h3>연체 목록</h3></div>
+        <table><thead><tr><th>#</th><th>도서명</th><th>회원(등급)</th><th>연락처</th><th>대출일</th><th>반납 예정</th><th>연체 일수</th><th>관리</th></tr></thead>
+        <tbody id="overdue-body"></tbody></table>
+      </div>
+    </div>
+
+    <!-- 대출자: 도서 검색 -->
+    <div class="page" id="page-u-browse">
+      <div class="member-picker">
+        <div class="member-avatar" id="user-avatar">?</div>
+        <div class="member-picker-info">
+          <div class="member-picker-name" id="user-name-disp">회원을 선택해주세요</div>
+          <div class="member-picker-email" id="user-email-disp">대출 신청을 위해 본인 계정을 선택하세요</div>
+        </div>
+        <div id="user-grade-info" style="margin-left:auto;margin-right:12px;text-align:right;font-size:12px;color:var(--muted2)"></div>
+        <select class="inp" id="user-select" onchange="selectMember()" style="width:180px"><option value="">-- 회원 선택 --</option></select>
+      </div>
+      <div class="section-head"><h2>도서 검색</h2><p id="browse-count"></p></div>
+      <div class="filter-row" style="margin-bottom:16px;gap:8px">
+        <input class="inp" style="width:220px" id="u-kw" placeholder="제목 / 저자 검색" oninput="filterUserBooks()">
+        <select class="inp" id="u-pub" onchange="filterUserBooks()"><option value="">출판사 전체</option></select>
+        <select class="inp" id="u-av" onchange="filterUserBooks()"><option value="">전체</option><option value="true">대출 가능</option><option value="false">대출 중</option></select>
+      </div>
+      <div class="book-grid" id="book-grid"></div>
+    </div>
+
+    <!-- 대출자: 내 대출 현황 -->
+    <div class="page" id="page-u-myloans">
+      <div class="member-picker">
+        <div class="member-avatar" id="my-avatar">?</div>
+        <div class="member-picker-info">
+          <div class="member-picker-name" id="my-name-disp">회원을 선택해주세요</div>
+          <div class="member-picker-email" id="my-email-disp">대출 현황을 보려면 본인 계정을 선택하세요</div>
+        </div>
+        <div id="my-grade-info" style="margin-left:auto;margin-right:12px;text-align:right;font-size:12px;color:var(--muted2)"></div>
+        <select class="inp" id="my-select" onchange="selectMemberMy()" style="width:180px"><option value="">-- 회원 선택 --</option></select>
+      </div>
+      <div class="section-head"><h2>내 대출 현황</h2><p id="my-loan-count"></p></div>
+      <div class="loan-cards" id="my-loans"></div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- 도서 모달 -->
+<div class="overlay" id="m-book">
+  <div class="modal">
+    <div class="modal-head"><h3 id="m-book-title">도서 등록</h3><button class="modal-close" onclick="closeModal('m-book')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="b-id">
+      <div class="fg"><label class="fl">제목 *</label><input class="inp fi" id="b-title" placeholder="도서 제목"></div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">저자 *</label><input class="inp fi" id="b-author" placeholder="저자명"></div>
+        <div class="fg"><label class="fl">출판사</label><input class="inp fi" id="b-publisher" placeholder="출판사"></div>
+      </div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">ISBN</label><input class="inp fi" id="b-isbn" placeholder="978-xxxxxxxxxx"></div>
+        <div class="fg"><label class="fl">재고 수량 *</label><input class="inp fi" type="number" id="b-stock" min="1" max="10" value="1" placeholder="1~10"></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('m-book')">취소</button><button class="btn btn-primary" onclick="submitBook()">저장</button></div>
+  </div>
+</div>
+
+<!-- 회원 모달 -->
+<div class="overlay" id="m-member">
+  <div class="modal">
+    <div class="modal-head"><h3 id="m-member-title">회원 등록</h3><button class="modal-close" onclick="closeModal('m-member')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="me-id">
+      <div class="fg"><label class="fl">이름 *</label><input class="inp fi" id="me-name" placeholder="홍길동"></div>
+      <div class="fg"><label class="fl">이메일 *</label><input class="inp fi" id="me-email" placeholder="example@email.com"></div>
+      <div class="fg"><label class="fl">전화번호</label><input class="inp fi" id="me-phone" placeholder="010-0000-0000"></div>
+      <div class="fg"><label class="fl">등급 *</label>
+        <select class="inp fi" id="me-grade-sel">
+          <option value="브론즈">브론즈 — 최대 1권, 연장 3일</option>
+          <option value="실버">실버 — 최대 2권, 연장 7일</option>
+          <option value="골드">골드 — 최대 3권, 연장 14일</option>
+        </select>
+      </div>
+      <table class="grade-table">
+        <tr><th>등급</th><th>최대 대출</th><th>최대 연장</th></tr>
+        <tr><td><span class="grade-bronze">브론즈</span></td><td>1권</td><td>3일</td></tr>
+        <tr><td><span class="grade-silver">실버</span></td><td>2권</td><td>7일</td></tr>
+        <tr><td><span class="grade-gold">골드</span></td><td>3권</td><td>14일</td></tr>
+      </table>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('m-member')">취소</button><button class="btn btn-primary" onclick="submitMember()">저장</button></div>
+  </div>
+</div>
+
+<!-- 대출 등록 모달 -->
+<div class="overlay" id="m-loan">
+  <div class="modal">
+    <div class="modal-head"><h3>대출 등록</h3><button class="modal-close" onclick="closeModal('m-loan')">✕</button></div>
+    <div class="modal-body">
+      <div class="fg"><label class="fl">도서 선택 *</label><select class="inp fi" id="l-book" onchange="updateLoanInfo()"></select></div>
+      <div class="fg"><label class="fl">회원 선택 *</label><select class="inp fi" id="l-member" onchange="updateLoanInfo()"></select></div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">대출일 *</label><input class="inp fi" type="date" id="l-date"></div>
+        <div class="fg"><label class="fl">반납 예정일 *</label><input class="inp fi" type="date" id="l-due"></div>
+      </div>
+      <div class="info-box" id="l-info">도서와 회원을 선택하면 정보가 표시됩니다.</div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('m-loan')">취소</button><button class="btn btn-primary" onclick="submitLoan()">대출 등록</button></div>
+  </div>
+</div>
+
+<!-- 대출 신청 모달 (대출자용) -->
+<div class="overlay" id="m-req">
+  <div class="modal">
+    <div class="modal-head"><h3>대출 신청</h3><button class="modal-close" onclick="closeModal('m-req')">✕</button></div>
+    <div class="modal-body">
+      <div class="info-box" id="req-info" style="margin-bottom:14px"></div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">대출일 *</label><input class="inp fi" type="date" id="req-date"></div>
+        <div class="fg"><label class="fl">반납 예정일 *</label><input class="inp fi" type="date" id="req-due"></div>
+      </div>
+      <input type="hidden" id="req-book-id">
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('m-req')">취소</button><button class="btn btn-user" onclick="submitRequest()">대출 신청</button></div>
+  </div>
+</div>
+
+<!-- 반납 모달 -->
+<div class="overlay" id="m-return">
+  <div class="modal">
+    <div class="modal-head"><h3>반납 처리</h3><button class="modal-close" onclick="closeModal('m-return')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="r-id">
+      <div class="info-box" id="r-info" style="margin-bottom:14px"></div>
+      <div class="fg"><label class="fl">반납일 *</label><input class="inp fi" type="date" id="r-date"></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('m-return')">취소</button><button class="btn btn-primary" onclick="submitReturn()">반납 완료</button></div>
+  </div>
+</div>
+
+<!-- 연장 모달 -->
+<div class="overlay" id="m-extend">
+  <div class="modal">
+    <div class="modal-head"><h3>대출 연장</h3><button class="modal-close" onclick="closeModal('m-extend')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="ext-id">
+      <div class="info-box" id="ext-info" style="margin-bottom:14px"></div>
+      <div class="fg">
+        <label class="fl">연장 일수 *</label>
+        <select class="inp fi" id="ext-days">
+          <option value="3">3일</option>
+          <option value="7">7일</option>
+          <option value="14">14일</option>
+        </select>
+      </div>
+      <div class="warn-box" id="ext-warn" style="margin-top:10px;display:none"></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('m-extend')">취소</button><button class="btn btn-sky" onclick="submitExtend()">연장 확정</button></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const API='';
+let books=[],members=[],loans=[];
+let donutChart=null,currentMode='admin',selectedMemberId=null;
+
+const today=()=>new Date().toISOString().split('T')[0];
+const fmt=d=>d?d.replace(/-/g,'/'):' — ';
+const diffD=(a,b)=>Math.floor((new Date(b)-new Date(a))/86400000);
+
+function gradeBadge(g){
+  const cls={브론즈:'grade-bronze',실버:'grade-silver',골드:'grade-gold'}[g]||'grade-bronze';
+  return `<span class="${cls}">${g}</span>`;
+}
+function stockPips(avail,total){
+  let h='<div class="stock-pips">';
+  for(let i=0;i<total;i++) h+=`<div class="stock-pip ${i<avail?'on':'off'}"></div>`;
+  return h+'</div>';
+}
+
+function toast(msg,type='ok'){const el=document.getElementById('toast');el.textContent=msg;el.className='show '+type;setTimeout(()=>el.className='',2800);}
+async function api(path,opts={}){const r=await fetch(API+path,{headers:{'Content-Type':'application/json'},...opts});if(!r.ok){const e=await r.json().catch(()=>({detail:'오류'}));throw new Error(e.detail||'오류');}return r.json();}
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+function clock(){document.getElementById('topbar-clock').textContent=new Date().toLocaleTimeString('ko-KR');}
+setInterval(clock,1000);clock();
+
+function switchMode(mode){
+  currentMode=mode;
+  document.body.classList.toggle('user-mode',mode==='user');
+  document.getElementById('btn-admin').className='mode-btn'+(mode==='admin'?' active-admin':'');
+  document.getElementById('btn-user').className='mode-btn'+(mode==='user'?' active-user':'');
+  document.getElementById('admin-nav').style.display=mode==='admin'?'':'none';
+  document.getElementById('user-nav').style.display=mode==='user'?'':'none';
+  document.getElementById('sidebar-hint').textContent=mode==='admin'?'localhost:8000/docs':'도서 검색 및 대출 신청';
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(mode==='admin') go('dashboard');
+  else{go('u-browse');populateUserSelects();}
+}
+
+const titles={dashboard:'대시보드',books:'도서 관리',members:'회원 관리',loans:'대출 관리',overdue:'연체 현황','u-browse':'도서 검색','u-myloans':'내 대출 현황'};
+function go(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  const btn=document.querySelector(`[onclick="go('${page}')"]`);if(btn)btn.classList.add('active');
+  document.getElementById('topbar-title').textContent=titles[page]||page;
+  if(page==='books'){buildPubFilter();filterBooks();}
+  if(page==='members')renderMembers();
+  if(page==='loans')renderLoans();
+  if(page==='overdue')renderOverdue();
+  if(page==='u-browse'){buildUserPubFilter();filterUserBooks();}
+  if(page==='u-myloans')renderMyLoans();
+}
+
+async function loadAll(){
+  try{
+    [books,members,loans]=await Promise.all([api('/books/'),api('/members/'),api('/loans/')]);
+    renderDashboard();updateOverdueBadge();
+    document.getElementById('topbar-sub').textContent='갱신 '+new Date().toLocaleTimeString('ko-KR');
+    populateUserSelects();
+  }catch(e){toast('서버 연결 실패. uvicorn이 실행 중인지 확인하세요.','err');}
+}
+
+/* ── 대시보드 ── */
+function renderDashboard(){
+  const avail=books.filter(b=>b.is_available).length;
+  const active=loans.filter(l=>!l.return_date).length;
+  const od=loans.filter(l=>!l.return_date&&l.due_date<today()).length;
+  const ret=loans.filter(l=>l.return_date).length;
+  document.getElementById('s-books').textContent=books.length;
+  document.getElementById('s-avail').textContent=avail;
+  document.getElementById('s-active').textContent=active;
+  document.getElementById('s-overdue').textContent=od;
+  document.getElementById('s-members').textContent=members.length;
+  document.getElementById('s-total').textContent=loans.length;
+  document.getElementById('s-returned').textContent=ret;
+  renderDonut(avail,active-od,od);renderTop5();
+  const tbody=document.getElementById('dash-loans');
+  const recent=[...loans].sort((a,b)=>b.id-a.id).slice(0,8);
+  if(!recent.length){tbody.innerHTML='<tr><td colspan="6" class="empty-td">대출 이력 없음</td></tr>';return;}
+  tbody.innerHTML=recent.map(l=>{
+    const ov=!l.return_date&&l.due_date<today();
+    const st=l.return_date?'<span class="badge gg"><span class="dot"></span>반납완료</span>':ov?'<span class="badge rr"><span class="dot"></span>연체</span>':'<span class="badge aa"><span class="dot"></span>대출중</span>';
+    return`<tr><td>${l.book.title}</td><td>${l.member.name}</td><td>${gradeBadge(l.member.grade)}</td><td>${fmt(l.loan_date)}</td><td>${fmt(l.due_date)}</td><td>${st}</td></tr>`;
+  }).join('');
+}
+function renderDonut(a,n,o){
+  const ctx=document.getElementById('chart-donut');if(!ctx)return;
+  if(donutChart)donutChart.destroy();
+  donutChart=new Chart(ctx,{type:'doughnut',data:{labels:['대출 가능','대출 중','연체'],datasets:[{data:[a,n,o],backgroundColor:['rgba(45,212,160,.85)','rgba(91,124,246,.85)','rgba(242,107,107,.85)'],borderColor:'#12151f',borderWidth:3,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:true,cutout:'68%',plugins:{legend:{position:'bottom',labels:{color:'#8892aa',font:{size:12},padding:14,boxWidth:9,boxHeight:9}},tooltip:{callbacks:{label:c=>` ${c.label}: ${c.raw}권`}}}}});
+}
+function renderTop5(){
+  const cnt={};loans.forEach(l=>{cnt[l.book.title]=(cnt[l.book.title]||0)+1;});
+  const sorted=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const max=sorted[0]?.[1]||1;
+  const el=document.getElementById('top5');
+  if(!sorted.length){el.innerHTML='<p style="color:var(--muted);font-size:12px">데이터 없음</p>';return;}
+  el.innerHTML=sorted.map(([t,n],i)=>`<div class="top-item"><span class="top-rank">${i+1}</span><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><span class="top-name">${t}</span><span class="top-cnt">${n}회</span></div><div class="top-bar-wrap"><div class="top-bar" style="width:${Math.round(n/max*100)}%"></div></div></div></div>`).join('');
+}
+function updateOverdueBadge(){
+  const cnt=loans.filter(l=>!l.return_date&&l.due_date<today()).length;
+  const nav=document.getElementById('nav-overdue');let b=nav.querySelector('.nav-badge');
+  if(cnt>0){if(!b){b=document.createElement('span');b.className='nav-badge';nav.appendChild(b);}b.textContent=cnt;}
+  else if(b)b.remove();
+}
+
+/* ── 도서 ── */
+function buildPubFilter(){
+  const sel=document.getElementById('bk-pub');
+  const pubs=[...new Set(books.map(b=>b.publisher).filter(Boolean))].sort();
+  const cur=sel.value;
+  sel.innerHTML='<option value="">출판사 전체</option>'+pubs.map(p=>`<option value="${p}"${p===cur?'selected':''}>${p}</option>`).join('');
+}
+function filterBooks(){
+  const kw=document.getElementById('bk-kw').value.toLowerCase();
+  const pub=document.getElementById('bk-pub').value;
+  const av=document.getElementById('bk-av').value;
+  const list=books.filter(b=>(!kw||b.title.toLowerCase().includes(kw)||b.author.toLowerCase().includes(kw))&&(!pub||b.publisher===pub)&&(av===''||String(b.is_available)===av));
+  const tbody=document.getElementById('books-body');
+  if(!list.length){tbody.innerHTML='<tr><td colspan="7" class="empty-td">도서 없음</td></tr>';return;}
+  tbody.innerHTML=list.map(b=>{
+    const pips=stockPips(b.available_stock,b.total_stock);
+    const stBadge=b.is_available?'<span class="badge gg"><span class="dot"></span>대출가능</span>':'<span class="badge rr"><span class="dot"></span>품절</span>';
+    return`<tr><td class="id-cell">${b.id}</td><td style="font-weight:500">${b.title}</td><td>${b.author}</td><td style="color:var(--muted2)">${b.publisher||'—'}</td>
+    <td><div class="stock-bar-wrap">${pips}<span style="font-size:11px;color:var(--muted);margin-left:2px">${b.available_stock}/${b.total_stock}</span></div></td>
+    <td>${stBadge}</td>
+    <td><div style="display:flex;gap:5px"><button class="btn btn-ghost btn-sm" onclick="editBook(${b.id})">수정</button><button class="btn btn-danger btn-sm" onclick="deleteBook(${b.id})">삭제</button></div></td></tr>`;
+  }).join('');
+}
+function openBookModal(){document.getElementById('b-id').value='';document.getElementById('m-book-title').textContent='도서 등록';['b-title','b-author','b-publisher','b-isbn'].forEach(id=>document.getElementById(id).value='');document.getElementById('b-stock').value=1;openModal('m-book');}
+function editBook(id){const b=books.find(x=>x.id===id);document.getElementById('b-id').value=id;document.getElementById('m-book-title').textContent='도서 수정';document.getElementById('b-title').value=b.title;document.getElementById('b-author').value=b.author;document.getElementById('b-publisher').value=b.publisher||'';document.getElementById('b-isbn').value=b.isbn||'';document.getElementById('b-stock').value=b.total_stock;openModal('m-book');}
+async function submitBook(){
+  const id=document.getElementById('b-id').value;
+  const body={title:document.getElementById('b-title').value.trim(),author:document.getElementById('b-author').value.trim(),publisher:document.getElementById('b-publisher').value.trim()||null,isbn:document.getElementById('b-isbn').value.trim()||null,total_stock:parseInt(document.getElementById('b-stock').value)||1};
+  if(!body.title||!body.author){toast('제목과 저자는 필수입니다','err');return;}
+  try{if(id)await api(`/books/${id}`,{method:'PUT',body:JSON.stringify(body)});else await api('/books/',{method:'POST',body:JSON.stringify(body)});closeModal('m-book');await loadAll();buildPubFilter();filterBooks();toast(id?'도서 정보가 수정되었습니다':'도서가 등록되었습니다');}catch(e){toast(e.message,'err');}
+}
+async function deleteBook(id){const b=books.find(x=>x.id===id);if(!confirm(`"${b.title}"을(를) 삭제하시겠습니까?`))return;try{await api(`/books/${id}`,{method:'DELETE'});await loadAll();filterBooks();toast('도서가 삭제되었습니다');}catch(e){toast(e.message,'err');}}
+
+/* ── 회원 ── */
+function filterMembers(){
+  const kw=document.getElementById('me-kw').value.toLowerCase();
+  const grade=document.getElementById('me-grade').value;
+  const list=members.filter(m=>(!kw||m.name.includes(kw)||m.email.toLowerCase().includes(kw))&&(!grade||m.grade===grade));
+  const tbody=document.getElementById('members-body');
+  if(!list.length){tbody.innerHTML='<tr><td colspan="8" class="empty-td">회원 없음</td></tr>';return;}
+  tbody.innerHTML=list.map(m=>`<tr>
+    <td class="id-cell">${m.id}</td><td style="font-weight:500">${m.name}</td>
+    <td style="color:var(--muted2)">${m.email}</td><td>${m.phone||'—'}</td>
+    <td>${gradeBadge(m.grade)}</td>
+    <td style="color:var(--muted2)">${m.max_loans}권 / 연장 ${m.max_extend_days}일</td>
+    <td><span class="badge ${m.active_loan_count>0?'aa':'gg'}">${m.active_loan_count}권</span></td>
+    <td><div style="display:flex;gap:5px"><button class="btn btn-ghost btn-sm" onclick="editMember(${m.id})">수정</button><button class="btn btn-danger btn-sm" onclick="deleteMember(${m.id})">삭제</button></div></td>
+  </tr>`).join('');
+}
+function renderMembers(){filterMembers();}
+function openMemberModal(){document.getElementById('me-id').value='';document.getElementById('m-member-title').textContent='회원 등록';['me-name','me-email','me-phone'].forEach(id=>document.getElementById(id).value='');document.getElementById('me-grade-sel').value='브론즈';openModal('m-member');}
+function editMember(id){const m=members.find(x=>x.id===id);document.getElementById('me-id').value=id;document.getElementById('m-member-title').textContent='회원 수정';document.getElementById('me-name').value=m.name;document.getElementById('me-email').value=m.email;document.getElementById('me-phone').value=m.phone||'';document.getElementById('me-grade-sel').value=m.grade;openModal('m-member');}
+async function submitMember(){
+  const id=document.getElementById('me-id').value;
+  const body={name:document.getElementById('me-name').value.trim(),email:document.getElementById('me-email').value.trim(),phone:document.getElementById('me-phone').value.trim()||null,grade:document.getElementById('me-grade-sel').value};
+  if(!body.name||!body.email){toast('이름과 이메일은 필수입니다','err');return;}
+  try{if(id)await api(`/members/${id}`,{method:'PUT',body:JSON.stringify(body)});else await api('/members/',{method:'POST',body:JSON.stringify(body)});closeModal('m-member');await loadAll();renderMembers();toast(id?'회원 정보가 수정되었습니다':'회원이 등록되었습니다');}catch(e){toast(e.message,'err');}
+}
+async function deleteMember(id){const m=members.find(x=>x.id===id);if(!confirm(`"${m.name}" 회원을 삭제하시겠습니까?`))return;try{await api(`/members/${id}`,{method:'DELETE'});await loadAll();renderMembers();toast('회원이 삭제되었습니다');}catch(e){toast(e.message,'err');}}
+
+/* ── 대출 ── */
+function renderLoans(){
+  const f=document.getElementById('loan-filter').value;
+  let list=[...loans].sort((a,b)=>b.id-a.id);
+  if(f==='active')list=list.filter(l=>!l.return_date);
+  if(f==='returned')list=list.filter(l=>l.return_date);
+  const tbody=document.getElementById('loans-body');
+  if(!list.length){tbody.innerHTML='<tr><td colspan="9" class="empty-td">대출 이력 없음</td></tr>';return;}
+  tbody.innerHTML=list.map(l=>{
+    const od=!l.return_date&&l.due_date<today();
+    const st=l.return_date?'<span class="badge gg"><span class="dot"></span>반납완료</span>':od?'<span class="badge rr"><span class="dot"></span>연체</span>':'<span class="badge aa"><span class="dot"></span>대출중</span>';
+    const extInfo=l.extend_count>0?`<span style="font-size:11px;color:var(--sky)">+${l.extend_count}일</span>`:'—';
+    const btns=!l.return_date
+      ?`<div style="display:flex;gap:4px"><button class="btn btn-sky btn-sm" onclick="openExtend(${l.id})">연장</button><button class="btn btn-ghost btn-sm" onclick="openReturn(${l.id})">반납</button></div>`
+      :'';
+    return`<tr><td class="id-cell">${l.id}</td><td style="font-weight:500;max-width:140px">${l.book.title}</td>
+    <td>${l.member.name} ${gradeBadge(l.member.grade)}</td>
+    <td>${fmt(l.loan_date)}</td><td>${fmt(l.due_date)}</td><td>${fmt(l.return_date)}</td>
+    <td>${extInfo}</td><td>${st}</td><td>${btns}</td></tr>`;
+  }).join('');
+}
+function openLoanModal(){
+  const av=books.filter(b=>b.is_available);if(!av.length){toast('대출 가능한 도서가 없습니다','err');return;}
+  document.getElementById('l-book').innerHTML=av.map(b=>`<option value="${b.id}">${b.title} (재고 ${b.available_stock}/${b.total_stock})</option>`).join('');
+  document.getElementById('l-member').innerHTML=members.map(m=>`<option value="${m.id}">${m.name} [${m.grade} / 현재 ${m.active_loan_count}권]</option>`).join('');
+  document.getElementById('l-date').value=today();
+  const d=new Date();d.setDate(d.getDate()+14);document.getElementById('l-due').value=d.toISOString().split('T')[0];
+  updateLoanInfo();openModal('m-loan');
+}
+function updateLoanInfo(){
+  const bid=parseInt(document.getElementById('l-book').value);
+  const mid=parseInt(document.getElementById('l-member').value);
+  const b=books.find(x=>x.id===bid);const m=members.find(x=>x.id===mid);
+  if(b&&m){
+    const canLoan=m.active_loan_count<m.max_loans;
+    document.getElementById('l-info').innerHTML=
+      `도서: ${b.title}  |  재고 ${b.available_stock}/${b.total_stock}권<br>`+
+      `회원: ${m.name} [${m.grade}]  |  현재 ${m.active_loan_count}/${m.max_loans}권 대출 중`+
+      (canLoan?'':` <span style="color:var(--red)">— 대출 한도 초과</span>`);
+  }
+}
+async function submitLoan(){
+  const body={book_id:parseInt(document.getElementById('l-book').value),member_id:parseInt(document.getElementById('l-member').value),loan_date:document.getElementById('l-date').value,due_date:document.getElementById('l-due').value};
+  try{await api('/loans/',{method:'POST',body:JSON.stringify(body)});closeModal('m-loan');await loadAll();renderLoans();toast('대출이 등록되었습니다');}catch(e){toast(e.message,'err');}
+}
+function openReturn(loanId){
+  const l=loans.find(x=>x.id===loanId);
+  document.getElementById('r-id').value=loanId;
+  document.getElementById('r-info').textContent=`${l.book.title}  /  ${l.member.name} [${l.member.grade}]  (대출일: ${fmt(l.loan_date)})`;
+  document.getElementById('r-date').value=today();openModal('m-return');
+}
+async function submitReturn(){
+  const id=document.getElementById('r-id').value;
+  try{await api(`/loans/${id}/return`,{method:'PATCH',body:JSON.stringify({return_date:document.getElementById('r-date').value})});closeModal('m-return');await loadAll();if(currentMode==='admin')renderLoans();else renderMyLoans();toast('반납이 완료되었습니다');}catch(e){toast(e.message,'err');}
+}
+
+/* ── 연장 ── */
+function openExtend(loanId){
+  const l=loans.find(x=>x.id===loanId);
+  document.getElementById('ext-id').value=loanId;
+  const maxDays=l.member.max_extend_days;
+  const used=l.extend_count;
+  const remain=maxDays-used;
+  document.getElementById('ext-info').innerHTML=
+    `${l.book.title}  /  ${l.member.name} ${gradeBadge(l.member.grade)}<br>`+
+    `현재 반납 예정: ${fmt(l.due_date)}  |  누적 연장: ${used}일  |  잔여 연장 가능: ${remain}일`;
+  // 잔여일 이하 옵션만 활성화
+  const sel=document.getElementById('ext-days');
+  sel.innerHTML=[3,7,14].filter(d=>d<=remain).map(d=>`<option value="${d}">${d}일</option>`).join('');
+  if(!sel.options.length){
+    document.getElementById('ext-warn').textContent=`${l.member.grade} 등급 최대 연장일(${maxDays}일)을 모두 사용했습니다.`;
+    document.getElementById('ext-warn').style.display='block';
+    sel.innerHTML='<option>연장 불가</option>';
+  } else {
+    document.getElementById('ext-warn').style.display='none';
+  }
+  openModal('m-extend');
+}
+async function submitExtend(){
+  const id=document.getElementById('ext-id').value;
+  const days=parseInt(document.getElementById('ext-days').value);
+  if(!days){toast('연장 가능한 일수가 없습니다','err');return;}
+  try{await api(`/loans/${id}/extend`,{method:'PATCH',body:JSON.stringify({extend_days:days})});closeModal('m-extend');await loadAll();if(currentMode==='admin')renderLoans();else renderMyLoans();toast(`반납 예정일이 ${days}일 연장되었습니다`);}catch(e){toast(e.message,'err');}
+}
+
+/* ── 연체 ── */
+function renderOverdue(){
+  const list=loans.filter(l=>!l.return_date&&l.due_date<today());
+  const tbody=document.getElementById('overdue-body');
+  if(!list.length){tbody.innerHTML='<tr><td colspan="8" class="empty-td">연체 없음</td></tr>';return;}
+  tbody.innerHTML=list.map(l=>{const days=diffD(l.due_date,today());return`<tr><td class="id-cell">${l.id}</td><td style="font-weight:500">${l.book.title}</td><td>${l.member.name} ${gradeBadge(l.member.grade)}</td><td style="color:var(--muted2)">${l.member.phone||'—'}</td><td>${fmt(l.loan_date)}</td><td style="color:var(--red)">${fmt(l.due_date)}</td><td><span class="badge rr">+${days}일</span></td><td><button class="btn btn-ghost btn-sm" onclick="openReturn(${l.id})">반납처리</button></td></tr>`;}).join('');
+}
+
+/* ══ 대출자 기능 ══ */
+function populateUserSelects(){
+  const opts=members.map(m=>`<option value="${m.id}">${m.name} [${m.grade}]</option>`).join('');
+  ['user-select','my-select'].forEach(id=>{
+    document.getElementById(id).innerHTML='<option value="">-- 회원 선택 --</option>'+opts;
+    if(selectedMemberId) document.getElementById(id).value=selectedMemberId;
+  });
+  if(selectedMemberId) updateMemberUI(selectedMemberId);
+}
+function selectMember(){const id=parseInt(document.getElementById('user-select').value)||null;selectedMemberId=id;document.getElementById('my-select').value=id||'';updateMemberUI(id);filterUserBooks();}
+function selectMemberMy(){const id=parseInt(document.getElementById('my-select').value)||null;selectedMemberId=id;document.getElementById('user-select').value=id||'';updateMemberUI(id);renderMyLoans();}
+function updateMemberUI(id){
+  const m=members.find(x=>x.id===id);
+  ['user-avatar','my-avatar'].forEach(aid=>document.getElementById(aid).textContent=m?m.name.slice(0,1):'?');
+  document.getElementById('user-name-disp').textContent=m?m.name:'회원을 선택해주세요';
+  document.getElementById('user-email-disp').textContent=m?m.email:'대출 신청을 위해 본인 계정을 선택하세요';
+  document.getElementById('my-name-disp').textContent=m?m.name:'회원을 선택해주세요';
+  document.getElementById('my-email-disp').textContent=m?`${m.email}`:'대출 현황을 보려면 본인 계정을 선택하세요';
+  // 등급 정보 표시
+  const gradeHtml=m?`${gradeBadge(m.grade)}<br><span style="font-size:11px;color:var(--muted)">대출 ${m.active_loan_count}/${m.max_loans}권 · 연장 ${m.max_extend_days}일</span>`:'';
+  document.getElementById('user-grade-info').innerHTML=gradeHtml;
+  document.getElementById('my-grade-info').innerHTML=gradeHtml;
+}
+function buildUserPubFilter(){
+  const sel=document.getElementById('u-pub');
+  const pubs=[...new Set(books.map(b=>b.publisher).filter(Boolean))].sort();
+  sel.innerHTML='<option value="">출판사 전체</option>'+pubs.map(p=>`<option value="${p}">${p}</option>`).join('');
+}
+function filterUserBooks(){
+  const kw=document.getElementById('u-kw').value.toLowerCase();
+  const pub=document.getElementById('u-pub').value;
+  const av=document.getElementById('u-av').value;
+  const list=books.filter(b=>(!kw||b.title.toLowerCase().includes(kw)||b.author.toLowerCase().includes(kw))&&(!pub||b.publisher===pub)&&(av===''||String(b.is_available)===av));
+  document.getElementById('browse-count').textContent=`${list.length}권`;
+  const grid=document.getElementById('book-grid');
+  if(!list.length){grid.innerHTML='<p style="color:var(--muted);grid-column:1/-1;padding:32px 0">검색 결과 없음</p>';return;}
+  const m=selectedMemberId?members.find(x=>x.id===selectedMemberId):null;
+  const canRequestMore=m?m.active_loan_count<m.max_loans:false;
+  grid.innerHTML=list.map(b=>{
+    let btn;
+    if(!b.is_available) btn=`<span class="badge rr"><span class="dot"></span>품절</span>`;
+    else if(!selectedMemberId) btn=`<button class="btn btn-ghost btn-sm" disabled title="회원을 먼저 선택하세요" style="opacity:.5">대출 신청</button>`;
+    else if(!canRequestMore) btn=`<button class="btn btn-ghost btn-sm" disabled title="대출 한도 초과" style="opacity:.5">한도 초과</button>`;
+    else btn=`<button class="btn btn-user btn-sm" onclick="openRequest(${b.id})">대출 신청</button>`;
+    const pips=stockPips(b.available_stock,Math.min(b.total_stock,3));
+    return`<div class="book-card">
+      <div class="book-card-title">${b.title}</div>
+      <div class="book-card-author">${b.author}</div>
+      <div class="book-card-pub">${b.publisher||'—'}</div>
+      <div class="book-card-foot">
+        <div style="display:flex;align-items:center;gap:6px">${pips}<span style="font-size:11px;color:var(--muted)">${b.available_stock}/${b.total_stock}</span></div>
+        ${btn}
+      </div>
+    </div>`;
+  }).join('');
+}
+function openRequest(bookId){
+  if(!selectedMemberId){toast('회원을 먼저 선택해주세요','err');return;}
+  const b=books.find(x=>x.id===bookId);
+  const m=members.find(x=>x.id===selectedMemberId);
+  document.getElementById('req-book-id').value=bookId;
+  document.getElementById('req-info').innerHTML=`${b.title}  /  ${b.author}<br>재고: ${b.available_stock}/${b.total_stock}권  |  회원: ${m.name} ${gradeBadge(m.grade)}  |  현재 대출 ${m.active_loan_count}/${m.max_loans}권`;
+  document.getElementById('req-date').value=today();
+  const d=new Date();d.setDate(d.getDate()+14);document.getElementById('req-due').value=d.toISOString().split('T')[0];
+  openModal('m-req');
+}
+async function submitRequest(){
+  const body={book_id:parseInt(document.getElementById('req-book-id').value),member_id:selectedMemberId,loan_date:document.getElementById('req-date').value,due_date:document.getElementById('req-due').value};
+  try{await api('/loans/',{method:'POST',body:JSON.stringify(body)});closeModal('m-req');await loadAll();filterUserBooks();toast('대출 신청이 완료되었습니다');}catch(e){toast(e.message,'err');}
+}
+function renderMyLoans(){
+  const el=document.getElementById('my-loans');
+  if(!selectedMemberId){el.innerHTML='<p style="color:var(--muted);padding:20px 0">회원을 선택하면 대출 현황이 표시됩니다.</p>';document.getElementById('my-loan-count').textContent='';return;}
+  const m=members.find(x=>x.id===selectedMemberId);
+  const myLoans=loans.filter(l=>l.member.id===selectedMemberId).sort((a,b)=>b.id-a.id);
+  const active=myLoans.filter(l=>!l.return_date).length;
+  document.getElementById('my-loan-count').textContent=`대출 중 ${active}/${m?.max_loans||'?'}권 · 전체 ${myLoans.length}건`;
+  if(!myLoans.length){el.innerHTML='<p style="color:var(--muted);padding:20px 0">대출 이력이 없습니다.</p>';return;}
+  el.innerHTML=myLoans.map(l=>{
+    const od=!l.return_date&&l.due_date<today();
+    const st=l.return_date?'<span class="badge gg"><span class="dot"></span>반납완료</span>':od?'<span class="badge rr"><span class="dot"></span>연체중</span>':'<span class="badge aa"><span class="dot"></span>대출중</span>';
+    const extBadge=l.extend_count>0?`<span style="font-size:11px;color:var(--sky)">+${l.extend_count}일 연장됨</span>`:'';
+    const days=od?`<span style="font-size:11px;color:var(--red)">+${diffD(l.due_date,today())}일 연체</span>`:'';
+    const btns=!l.return_date?`<div style="display:flex;gap:5px"><button class="btn btn-sky btn-sm" onclick="openExtend(${l.id})">연장</button><button class="btn btn-ghost btn-sm" onclick="openReturn(${l.id})">반납</button></div>`:'';
+    return`<div class="loan-card"><div class="loan-card-spine ${od?'overdue':''}"></div>
+    <div class="loan-card-info"><div class="loan-card-title">${l.book.title}</div><div class="loan-card-meta">저자: ${l.book.author}  |  대출일: ${fmt(l.loan_date)}  |  반납 예정: ${fmt(l.due_date)}</div></div>
+    <div class="loan-card-right">${st}${extBadge}${days}${btns}</div></div>`;
+  }).join('');
+}
+
+loadAll();
+</script>
+</body>
+</html>
